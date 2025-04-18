@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kawaii Mario Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Comic Neue', cursive;
+            overflow: hidden;
+            background-color: #87CEEB;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background-color: #87CEEB;
+        }
+        
+        .kawaii-mario {
+            position: absolute;
+            width: 50px;
+            height: 60px;
+            background-color: #FF5252;
+            border-radius: 50% 50% 40% 40%;
+            z-index: 10;
+        }
+        
+        .kawaii-mario:before {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            top: 15px;
+            left: 10px;
+        }
+        
+        .kawaii-mario:after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            top: 15px;
+            right: 10px;
+        }
+        
+        .eye {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: black;
+            border-radius: 50%;
+            top: 20px;
+        }
+        
+        .eye.left {
+            left: 15px;
+        }
+        
+        .eye.right {
+            right: 15px;
+        }
+        
+        .mouth {
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            border-bottom: 3px solid black;
+            border-radius: 0 0 50% 50%;
+            bottom: 15px;
+            left: 15px;
+        }
+        
+        .hat {
+            position: absolute;
+            width: 40px;
+            height: 15px;
+            background-color: #FF0000;
+            border-radius: 50% 50% 0 0;
+            top: -5px;
+            left: 5px;
+        }
+        
+        .hat:after {
+            content: "";
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #FF0000;
+            border-radius: 50%;
+            top: -10px;
+            left: 12px;
+        }
+        
+        .block {
+            position: absolute;
+            background-color: #D2B48C;
+            border: 3px solid #8B4513;
+        }
+        
+        .pyramid {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 50px solid transparent;
+            border-right: 50px solid transparent;
+            border-bottom: 100px solid #D2B48C;
+            border-bottom-color: #8B4513;
+        }
+        
+        .question-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .question-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .option {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+        
+        .option:hover {
+            background-color: #45a049;
+        }
+        
+        .feedback {
+            font-size: 50px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .correct {
+            color: green;
+        }
+        
+        .incorrect {
+            color: red;
+        }
+        
+        .input-answer {
+            padding: 10px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            width: 200px;
+            margin-right: 10px;
+        }
+        
+        .submit-btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .cloud {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0.8;
+        }
+        
+        .coin {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: gold;
+            border-radius: 50%;
+            border: 2px solid #DAA520;
+            z-index: 5;
+        }
+        
+        .coin:before {
+            content: "";
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #FFD700;
+            border-radius: 50%;
+            top: 5px;
+            left: 5px;
+        }
+        
+        .score-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer" class="relative w-full h-screen overflow-hidden">
+        <div id="scoreDisplay" class="score-display">Score: 0</div>
+        
+        <div id="kawaiiMario" class="kawaii-mario">
+            <div class="hat"></div>
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="mouth"></div>
+        </div>
+        
+        <!-- Game elements will be added here dynamically -->
+        
+        <div id="questionModal" class="question-modal">
+            <div class="question-box">
+                <h2 class="text-2xl font-bold mb-4">What does the video show?</h2>
+                <video id="questionVideo" width="100%" controls>
+                    <source src="" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div id="optionsContainer" class="options">
+                    <!-- Options will be added dynamically -->
+                </div>
+                <div id="feedback" class="feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        const mario = document.getElementById('kawaiiMario');
+        const gameContainer = document.getElementById('gameContainer');
+        const questionModal = document.getElementById('questionModal');
+        const feedback = document.getElementById('feedback');
+        const questionVideo = document.getElementById('questionVideo');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        
+        let marioX = 50;
+        let marioY = 300;
+        let marioSpeed = 5;
+        let isJumping = false;
+        let jumpHeight = 0;
+        let maxJumpHeight = 150;
+        let isFalling = false;
+        let gravity = 2;
+        let gameWidth = window.innerWidth;
+        let gameHeight = window.innerHeight;
+        let groundLevel = gameHeight - 100;
+        let blocks = [];
+        let pyramids = [];
+        let coins = [];
+        let score = 0;
+        let gameRunning = true;
+        let coinCount = 0;
+        
+        // Question data
+        const questions = [
+            {
+                videoUrl: "https://tidsozluk.aile.gov.tr/vidz_proc/0128/degiske/128-01_cr_0.5.mp4",
+                options: ["beklemek", "bulmak", "koklamak", "oynamak"],
+                correctAnswer: "beklemek"
+            },
+            {
+                videoUrl: "https://tidsozluk.aile.gov.tr/vidz_proc/1554/degiske/1554-02_cr_0.5.mp4",
+                options: ["geçmiş", "önce", "geçiş", "değil"],
+                correctAnswer: "geçmiş"
+            }
+        ];
+        
+        // Initialize game
+        function initGame() {
+            // Set initial position
+            marioY = groundLevel - 60;
+            updateMarioPosition();
+            
+            // Create ground
+            createGround();
+            
+            // Create some blocks
+            createBlocks();
+            
+            // Create coins
+            createCoins();
+            
+            // Create clouds
+            createClouds();
+            
+            // Start game loop
+            gameLoop();
+        }
+        
+        function createGround() {
+            for (let i = 0; i < 20; i++) {
+                const block = document.createElement('div');
+                block.className = 'block';
+                block.style.width = '100px';
+                block.style.height = '100px';
+                block.style.left = (i * 100) + 'px';
+                block.style.top = groundLevel + 'px';
+                gameContainer.appendChild(block);
+                blocks.push(block);
+            }
+        }
+        
+        function createBlocks() {
+            for (let i = 0; i < 5; i++) {
+                const block = document.createElement('div');
+                block.className = 'block';
+                block.style.width = '80px';
+                block.style.height = '40px';
+                block.style.left = (300 + i * 200) + 'px';
+                block.style.top = (groundLevel - 40) + 'px';
+                gameContainer.appendChild(block);
+                blocks.push(block);
+            }
+        }
+        
+        function createCoins() {
+            for (let i = 0; i < 10; i++) {
+                const coin = document.createElement('div');
+                coin.className = 'coin';
+                coin.style.left = (200 + i * 150) + 'px';
+                coin.style.top = (groundLevel - 120) + 'px';
+                gameContainer.appendChild(coin);
+                coins.push(coin);
+            }
+        }
+        
+        function createClouds() {
+            for (let i = 0; i < 5; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                cloud.style.width = (100 + Math.random() * 50) + 'px';
+                cloud.style.height = (60 + Math.random() * 30) + 'px';
+                cloud.style.left = (Math.random() * gameWidth) + 'px';
+                cloud.style.top = (50 + Math.random() * 100) + 'px';
+                gameContainer.appendChild(cloud);
+            }
+        }
+        
+        function updateMarioPosition() {
+            mario.style.left = marioX + 'px';
+            mario.style.top = marioY + 'px';
+        }
+        
+        // Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            
+            switch(e.key) {
+                case 'ArrowRight':
+                    marioX += marioSpeed;
+                    break;
+                case 'ArrowLeft':
+                    marioX -= marioSpeed;
+                    break;
+                case 'ArrowUp':
+                    if (!isJumping && !isFalling) {
+                        isJumping = true;
+                        jumpHeight = 0;
+                    }
+                    break;
+            }
+            
+            // Keep Mario within screen bounds
+            if (marioX < 0) marioX = 0;
+            if (marioX > gameWidth - 50) marioX = gameWidth - 50;
+            
+            updateMarioPosition();
+        });
+        
+        function checkCollision() {
+            // Check if Mario collects a coin
+            coins.forEach((coin, index) => {
+                const coinRect = coin.getBoundingClientRect();
+                const marioRect = mario.getBoundingClientRect();
+                
+                if (marioRect.right > coinRect.left && 
+                    marioRect.left < coinRect.right &&
+                    marioRect.bottom > coinRect.top && 
+                    marioRect.top < coinRect.bottom) {
+                    
+                    // Remove coin
+                    gameContainer.removeChild(coin);
+                    coins.splice(index, 1);
+                    
+                    // Increase score
+                    score += 10;
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    
+                    // Show question after collecting coin
+                    coinCount++;
+                    showQuestion(coinCount - 1); // Use 0-based index for questions
+                }
+            });
+        }
+        
+        function showQuestion(questionIndex) {
+            if (questionIndex >= questions.length) {
+                questionIndex = questions.length - 1; // Use last question if we run out
+            }
+            
+            const question = questions[questionIndex];
+            
+            gameRunning = false;
+            questionVideo.src = question.videoUrl;
+            
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+            
+            // Add new options
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option';
+                button.textContent = option;
+                button.onclick = () => checkAnswer(option, question.correctAnswer);
+                optionsContainer.appendChild(button);
+            });
+            
+            questionModal.style.display = 'flex';
+            questionVideo.play();
+        }
+        
+        function checkAnswer(answer, correctAnswer) {
+            if (answer === correctAnswer) {
+                // Correct answer
+                feedback.textContent = '✓';
+                feedback.className = 'feedback correct';
+                feedback.style.display = 'block';
+                
+                setTimeout(() => {
+                    questionModal.style.display = 'none';
+                    feedback.style.display = 'none';
+                    gameRunning = true;
+                }, 1000);
+            } else {
+                // Wrong answer
+                feedback.textContent = '✗';
+                feedback.className = 'feedback incorrect';
+                feedback.style.display = 'block';
+                
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 1000);
+            }
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            // Handle jumping
+            if (isJumping) {
+                jumpHeight += 5;
+                marioY -= 5;
+                
+                if (jumpHeight >= maxJumpHeight) {
+                    isJumping = false;
+                    isFalling = true;
+                }
+            }
+            
+            // Handle falling
+            if (isFalling) {
+                marioY += gravity;
+                
+                if (marioY >= groundLevel - 60) {
+                    marioY = groundLevel - 60;
+                    isFalling = false;
+                }
+            }
+            
+            updateMarioPosition();
+            checkCollision();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            gameWidth = window.innerWidth;
+            gameHeight = window.innerHeight;
+            groundLevel = gameHeight - 100;
+        });
+        
+        // Start the game
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
+
